@@ -20384,7 +20384,7 @@ CSTCV - 3.7 x 3.1 mm&lt;br&gt;</description>
 <part name="U1" library="modules" deviceset="CC1101" device="SMD"/>
 <part name="C9" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="CPOL-EU" device="B/3528-21W" package3d_urn="urn:adsk.eagle:package:23411/1" value="100u Ta"/>
 <part name="C3" library="resistor" library_urn="urn:adsk.eagle:library:348" deviceset="C-EU" device="C0805K" package3d_urn="urn:adsk.eagle:package:26201/1" value="100n"/>
-<part name="FRAME1" library="frames" library_urn="urn:adsk.eagle:library:229" deviceset="DINA3_L" device="" value="AskSinpp_UniversalBoard"/>
+<part name="FRAME1" library="frames" library_urn="urn:adsk.eagle:library:229" deviceset="DINA3_L" device="" value="Frame"/>
 <part name="IC1" library="SamacSys_Parts" library_urn="urn:adsk.eagle:library:28946538" deviceset="MCP1700T-3302E_MB" device="" package3d_urn="urn:adsk.eagle:package:28946584/2"/>
 <part name="SPS30" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-1X5" device="" package3d_urn="urn:adsk.eagle:package:22469/2" value="SPS30"/>
 <part name="C4" library="resistor" library_urn="urn:adsk.eagle:library:348" deviceset="C-EU" device="C0805K" package3d_urn="urn:adsk.eagle:package:26201/1" value="100n"/>
