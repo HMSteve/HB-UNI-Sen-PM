@@ -11,15 +11,17 @@
 #include <Sensors.h>
 #include <sps30.h>
 
-#define AUTO_CLEAN_DAYS 4
+#define AUTO_CLEAN_DAYS 7
 
 
 namespace as {
 
 class Sens_SPS30 : public Sensor {
-  struct sps30_measurement m;
+
 
 public:
+  struct sps30_measurement m;
+
   Sens_SPS30 () {}
 
   void init () {
@@ -44,7 +46,37 @@ public:
 
   bool measure (__attribute__((unused)) bool async=false) {
     int16_t ret = sps30_read_measurement(&m);
-    if (ret < 0) {
+    if (ret != 0) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+
+  bool stop_measurement (void) {
+    int16_t ret = sps30_stop_measurement();
+    if (ret != 0) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+
+  bool start_measurement (void) {
+    int16_t ret = sps30_start_measurement();
+    if (ret != 0) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+
+  bool start_manual_fan_cleaning (void) {
+    int16_t ret = sps30_start_manual_fan_cleaning();
+    if (ret != 0) {
       return false;
     } else {
       return true;

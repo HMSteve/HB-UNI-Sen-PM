@@ -25,6 +25,10 @@
 
 #define PEERS_PER_CHANNEL 6
 
+#define FAN_CLEANING_INTERVAL (60UL * 60 * 24 * 5) //every 5 days
+#define SPS_SAMPLING_INTERVAL 30 // startup time plus same time sampling every second
+#define SPS_MAX_WORKING_HUMIDITY 95 //PM measurement only up to this value. maximum per datasheet is 95
+
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
@@ -74,12 +78,12 @@ class GDList0 : public RegList0<Reg0> {
 
 class PMDataMsg1 : public Message {
   public:
-    void init(uint8_t msgcnt, int16_t temp, uint8_t humidity, uint16_t mc1p0, uint16_t mc2p5, uint16_t mc4p0, uint16_t mc10p0) {
+    void init(uint8_t msgcnt, int16_t temp, uint8_t humidity, uint16_t mc1p0, uint16_t mc2p5, uint16_t mc4p0, uint16_t mc10p0, uint8_t pm_valid) {
       // Message Length (first byte param.): 11 + payload. Max. payload: 17 Bytes (https://www.youtube.com/watch?v=uAyzimU60jw)
       uint8_t t1 = (temp >> 8) & 0x7f;
       uint8_t t2 = temp & 0xff;
-      Message::init(20, msgcnt, 0x70, BIDI | WKMEUP, t1, t2);
-      pload[0] = humidity & 0xff;
+      Message::init(21, msgcnt, 0x70, BIDI | WKMEUP, t1, t2);
+      pload[0] = humidity;
       pload[1] = (mc1p0 >> 8) & 0xff;
       pload[2] = mc1p0 & 0xff;         
       pload[3] = (mc2p5 >> 8) & 0xff;
@@ -87,7 +91,8 @@ class PMDataMsg1 : public Message {
       pload[5] = (mc4p0 >> 8) & 0xff;
       pload[6] = mc4p0 & 0xff;         
       pload[7] = (mc10p0 >> 8) & 0xff;
-      pload[8] = mc10p0 & 0xff;         
+      pload[8] = mc10p0 & 0xff;     
+      pload[9] = pm_valid;    
     }
 };
 
@@ -112,35 +117,186 @@ class PMDataMsg2 : public Message {
 };
 
 
+class FanCleanTimer : public Alarm {
+  uint32_t  m_Period;
+  bool      m_tbCleaned;
+
+public:
+  FanCleanTimer () : Alarm(0), m_Period(FAN_CLEANING_INTERVAL) {}
+  virtual ~FanCleanTimer() {}
+
+  virtual void trigger (AlarmClock& clock) {
+    DPRINTLN("SPS30 fan cleaning required.");
+    m_tbCleaned = true;
+    tick = m_Period;
+    clock.add(*this);
+  }
+
+  void init(uint32_t period,AlarmClock& clock) {
+    m_Period = period;
+    set(m_Period);
+    clock.add(*this);
+  }  
+
+  bool ToBeCleaned(void) {
+    return(m_tbCleaned);
+  }
+
+  void Cleaned(bool cleaned) {
+    m_tbCleaned = !(cleaned);
+  }
+}; 
+
+FanCleanTimer fanCleanTimer;
+
+
 class SensChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNEL, GDList0>, public Alarm {
     PMDataMsg1 msg1;
     PMDataMsg2 msg2;
     Sens_SHT31<0x44> sht31;  //SG: GY breakout board standard address
     Sens_SPS30 sps30;
     uint16_t millis;
+    uint8_t ct;
+    struct sps30_measurement spsdta;
+
+    struct sps30_measurement_int {
+        uint16_t mc_1p0;
+        uint16_t mc_2p5;
+        uint16_t mc_4p0;
+        uint16_t mc_10p0;
+        uint16_t nc_0p5;
+        uint16_t nc_1p0;
+        uint16_t nc_2p5;
+        uint16_t nc_4p0;
+        uint16_t nc_10p0;
+        uint16_t typical_particle_size;
+    } spsint;
+    
 
   public:
-    SensChannel () : Channel(), Alarm(5), millis(0) {}
+    SensChannel () : Channel(), Alarm(5), millis(0), ct(0) {}
     virtual ~SensChannel () {}
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
-      // reactivate for next measure
-      tick = seconds2ticks(10);
-      clock.add(*this);
-      sht31.measure();
+      if (ct == 0) {
+        measure_start();
+      }
+      else if ((ct > 0)&&(ct <= SPS_SAMPLING_INTERVAL)) {
+        measure_loop();
+      }
+      else if (ct == (SPS_SAMPLING_INTERVAL + 1)) {
+        measure_end();
+      }
+      clock.add(*this);     
+    }
+
+
+    void madd(struct sps30_measurement* m1, struct sps30_measurement* m2) {
+      m1->mc_1p0 += m2->mc_1p0;
+      m1->mc_2p5 += m2->mc_2p5;
+      m1->mc_4p0 += m2->mc_4p0;
+      m1->mc_10p0 += m2->mc_10p0;
+      m1->nc_0p5 += m2->nc_0p5;      
+      m1->nc_1p0 += m2->nc_1p0;   
+      m1->nc_2p5 += m2->nc_2p5; 
+      m1->nc_4p0 += m2->nc_4p0;   
+      m1->nc_10p0 += m2->nc_10p0;    
+      m1->typical_particle_size += m2->typical_particle_size;    
+    }
+
+    void mdiv(struct sps30_measurement* m1, float d) {
+      m1->mc_1p0 /= d;
+      m1->mc_2p5 /= d;
+      m1->mc_4p0 /= d;
+      m1->mc_10p0 /= d;
+      m1->nc_0p5 /= d;      
+      m1->nc_1p0 /= d;   
+      m1->nc_2p5 /= d; 
+      m1->nc_4p0 /= d;   
+      m1->nc_10p0 /= d;    
+      m1->typical_particle_size /= d;    
+    }
+
+    void mclr(struct sps30_measurement* m1) {
+      m1->mc_1p0 = 0.0;
+      m1->mc_2p5 = 0.0;
+      m1->mc_4p0 = 0.0;
+      m1->mc_10p0 = 0.0;
+      m1->nc_0p5 = 0.0;      
+      m1->nc_1p0 = 0.0;   
+      m1->nc_2p5 = 0.0; 
+      m1->nc_4p0 = 0.0;   
+      m1->nc_10p0 = 0.0;    
+      m1->typical_particle_size = 0.0;    
+    }   
+
+    void mint(struct sps30_measurement* m1, struct sps30_measurement_int* m2) {
+      m2->mc_1p0 = round(m1->mc_1p0 * 10.0);
+      m2->mc_2p5 = round(m1->mc_2p5 * 10.0);
+      m2->mc_4p0 = round(m1->mc_4p0 * 10.0);
+      m2->mc_10p0 = round(m1->mc_10p0 * 10.0);
+      m2->nc_0p5 = round(m1->nc_0p5 * 10.0);      
+      m2->nc_1p0 = round(m1->nc_1p0 * 10.0);   
+      m2->nc_2p5 = round(m1->nc_2p5 * 10.0); 
+      m2->nc_4p0 = round(m1->nc_4p0 * 10.0);   
+      m2->nc_10p0 = round(m1->nc_10p0 * 10.0);    
+      m2->typical_particle_size = round(m1->typical_particle_size * 100.0);       
+    }
+    
+
+    void measure_start(void) {
+       sht31.measure();
+       if (sht31.humidity() <= SPS_MAX_WORKING_HUMIDITY) {
+         DPRINT("Starting SPS30, wait "); DDEC(SPS_SAMPLING_INTERVAL); DPRINTLN(" sec.");
+         mclr(&spsdta);
+         sps30.start_measurement();
+         if(fanCleanTimer.ToBeCleaned()) {
+          DPRINTLN("SPS30 fan cleaning started.");         
+          sps30.start_manual_fan_cleaning();
+          fanCleanTimer.Cleaned(true);
+         }         
+         ct=1;
+         tick = seconds2ticks(SPS_SAMPLING_INTERVAL); 
+       }
+       else {
+        DPRINTLN("SPS30 not started, too wet.");       
+        uint8_t msgcnt = device().nextcount();
+        msg1.init( msgcnt, sht31.temperature(), sht31.humidity(), spsint.mc_1p0, spsint.mc_2p5, spsint.mc_4p0, spsint.mc_10p0, 0);
+        device().sendPeerEvent(msg1, *this);        
+        ct=0;
+        tick = seconds2ticks(device().getList0().updIntervall());
+       }
+    }
+
+
+    void measure_loop(void) {
+      DPRINT("Taking measurement #"); DDEC(ct);
       sps30.measure();
+      madd(&spsdta, &sps30.m);
+      DPRINT("  PM10: "); DDECLN(spsdta.mc_10p0);
+      ct++;
+      tick = seconds2ticks(1); 
+    }
+
+
+    void measure_end(void) {
+      DPRINTLN("SPS30 measurement cycle finished, sensor idle.");        
+      mdiv(&spsdta, SPS_SAMPLING_INTERVAL);
+      mint(&spsdta, &spsint);
       DPRINT("temp / hum = ");DDEC(sht31.temperature());DPRINT(" / ");DDECLN(sht31.humidity());
-      DPRINT("mass concentration 1 / 2.5 / 4 / 10 = ");DDEC(sps30.mc_1p0());DPRINT(" / ");DDEC(sps30.mc_2p5());;DPRINT(" / ");DDEC(sps30.mc_4p0());;DPRINT(" / ");DDECLN(sps30.mc_10p0());
-      DPRINT("numb concentration 0.5 / 1 / 2.5 / 4 / 10 = ");DDEC(sps30.nc_0p5());DPRINT(" / ");DDEC(sps30.nc_1p0());DPRINT(" / ");DDEC(sps30.nc_2p5());;DPRINT(" / ");DDEC(sps30.nc_4p0());;DPRINT(" / ");DDECLN(sps30.nc_10p0());
-      DPRINT("avg particle size = ");DDECLN(sps30.partsize());
+      DPRINT("mass concentration 1 / 2.5 / 4 / 10 = ");DDEC(spsdta.mc_1p0);DPRINT(" / ");DDEC(spsdta.mc_2p5);;DPRINT(" / ");DDEC(spsdta.mc_4p0);;DPRINT(" / ");DDECLN(spsdta.mc_10p0);
+      DPRINT("numb concentration 0.5 / 1 / 2.5 / 4 / 10 = ");DDEC(spsdta.nc_0p5);DPRINT(" / ");DDEC(spsdta.nc_1p0);DPRINT(" / ");DDEC(spsdta.nc_2p5);;DPRINT(" / ");DDEC(spsdta.nc_4p0);;DPRINT(" / ");DDECLN(spsdta.nc_10p0);
+      DPRINT("avg particle size = ");DDECLN(spsdta.typical_particle_size);     
             
       uint8_t msgcnt = device().nextcount();
-      //msg1.init( msgcnt, sht31.temperature(), sht31.humidity(), sps30.mc_1p0(), sps30.mc_2p5(), sps30.mc_4p0(), sps30.mc_10p0());
-      msg1.init( msgcnt, 0x0333, 0x55, sps30.mc_1p0(), sps30.mc_2p5(), sps30.mc_4p0(), sps30.mc_10p0());
+      msg1.init( msgcnt, sht31.temperature(), sht31.humidity(), spsint.mc_1p0, spsint.mc_2p5, spsint.mc_4p0, spsint.mc_10p0, 1);
       device().sendPeerEvent(msg1, *this);
       msgcnt = device().nextcount();
-      msg2.init( msgcnt, sps30.nc_0p5(), sps30.nc_1p0(), sps30.nc_2p5(), sps30.nc_4p0(), sps30.nc_10p0(), sps30.partsize());
-      device().sendPeerEvent(msg2, *this);      
+      msg2.init( msgcnt, spsint.nc_0p5, spsint.nc_1p0, spsint.nc_2p5, spsint.nc_4p0, spsint.nc_10p0, spsint.typical_particle_size);
+      device().sendPeerEvent(msg2, *this);    
+      sps30.stop_measurement();
+      ct=0;
+      tick = seconds2ticks(max(device().getList0().updIntervall() - 2 * SPS_SAMPLING_INTERVAL, 10));
     }
 
 
@@ -173,7 +329,6 @@ class PMDevice : public MultiChannelDevice<Hal, SensChannel, 1, GDList0> {
       this->battery().low(this->getList0().lowBatLimit());
       DPRINTLN("* Config Changed       : List0");
       DPRINT(F("* LED Mode             : ")); DDECLN(this->getList0().ledMode());    
-      DPRINT(F("* Low Bat Limit        : ")); DDECLN(this->getList0().lowBatLimit()); 
       DPRINT(F("* Sendeversuche        : ")); DDECLN(this->getList0().transmitDevTryMax());          
       DPRINT(F("* SENDEINTERVALL       : ")); DDECLN(this->getList0().updIntervall());
     }
@@ -188,6 +343,7 @@ void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
+  fanCleanTimer.init(seconds2ticks(FAN_CLEANING_INTERVAL), sysclock);
   sdev.initDone();
 }
 
