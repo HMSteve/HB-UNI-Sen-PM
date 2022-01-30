@@ -26,7 +26,7 @@
 #define PEERS_PER_CHANNEL 6
 
 #define FAN_CLEANING_INTERVAL (60UL * 60 * 24 * 5) //every 5 days
-#define SPS_SAMPLING_INTERVAL 30 // startup time plus same time sampling every second
+#define SPS_SAMPLING_INTERVAL 60 // startup time plus same time sampling every second
 #define SPS_MAX_WORKING_HUMIDITY 95 //PM measurement only up to this value. maximum per datasheet is 95
 
 
@@ -118,32 +118,30 @@ class PMDataMsg2 : public Message {
 
 
 class FanCleanTimer : public Alarm {
-  uint32_t  m_Period;
-  bool      m_tbCleaned;
+  bool      tbCleaned;
 
 public:
-  FanCleanTimer () : Alarm(0), m_Period(FAN_CLEANING_INTERVAL) {}
+  FanCleanTimer () : Alarm(0), tbCleaned(0) {}
   virtual ~FanCleanTimer() {}
 
   virtual void trigger (AlarmClock& clock) {
     DPRINTLN("SPS30 fan cleaning required.");
-    m_tbCleaned = true;
-    tick = m_Period;
+    tbCleaned = true;
+    set(FAN_CLEANING_INTERVAL);
     clock.add(*this);
   }
 
   void init(uint32_t period,AlarmClock& clock) {
-    m_Period = period;
-    set(m_Period);
+    set(period);
     clock.add(*this);
   }  
 
   bool ToBeCleaned(void) {
-    return(m_tbCleaned);
+    return(tbCleaned);
   }
 
   void Cleaned(bool cleaned) {
-    m_tbCleaned = !(cleaned);
+    tbCleaned = !(cleaned);
   }
 }; 
 
@@ -343,7 +341,7 @@ void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
-  fanCleanTimer.init(seconds2ticks(FAN_CLEANING_INTERVAL), sysclock);
+  fanCleanTimer.init(seconds2ticks(5), sysclock);
   sdev.initDone();
 }
 
