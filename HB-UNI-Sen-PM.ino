@@ -6,7 +6,7 @@
 // 2022-01-23 PM, HMSteve (cc)
 //- -----------------------------------------------------------------------------------------------------------------------
 
-//#define NDEBUG   // disable all serial debug messages  
+#define NDEBUG   // disable all serial debug messages  
 #define SENSOR_ONLY
 
 #define EI_NOTEXTERNAL
@@ -25,9 +25,8 @@
 
 #define PEERS_PER_CHANNEL 6
 
-#define FAN_CLEANING_INTERVAL (60UL * 60 * 24 * 5) //every 5 days
-#define SPS_SAMPLING_INTERVAL 60 // startup time plus same time sampling every second
-#define SPS_MAX_WORKING_HUMIDITY 95 //PM measurement only up to this value. maximum per datasheet is 95
+#define FAN_CLEANING_INTERVAL 5      //every 5 days
+#define SPS_MAX_WORKING_HUMIDITY 95  //PM measurement only up to this value. maximum per datasheet is 95
 
 
 // all library classes are placed in the namespace 'as'
@@ -67,11 +66,31 @@ class GDList0 : public RegList0<Reg0> {
       return (this->readRegister(0x20, 0) << 8) + this->readRegister(0x21, 0);
     }
 
+
     void defaults () {
       clear();
       ledMode(1);
       transmitDevTryMax(3);           
-      updIntervall(10);
+      updIntervall(180);
+    }
+};
+
+DEFREGISTER(Reg1, 0x01)
+class SensorList1 : public RegList1<Reg1> {
+  public:
+    SensorList1 (uint16_t addr) : RegList1<Reg1>(addr) {}
+
+    bool samplingPeriod (uint8_t value) const {
+      return this->writeRegister(0x01, value);
+    }
+    
+    uint16_t samplingPeriod () const {
+      return this->readRegister(0x01, 0);
+    }
+ 
+    void defaults () {
+      clear();
+      samplingPeriod(30); 
     }
 };
 
@@ -119,42 +138,48 @@ class PMDataMsg2 : public Message {
 
 class FanCleanTimer : public Alarm {
   bool      tbCleaned;
+  byte      dayct;
 
 public:
-  FanCleanTimer () : Alarm(0), tbCleaned(0) {}
+  FanCleanTimer () : Alarm(0), tbCleaned(false), dayct(FAN_CLEANING_INTERVAL - 1) {}
   virtual ~FanCleanTimer() {}
 
   virtual void trigger (AlarmClock& clock) {
-    DPRINTLN("SPS30 fan cleaning required.");
-    tbCleaned = true;
-    set(FAN_CLEANING_INTERVAL);
-    clock.add(*this);
+    dayct++;
+    if(dayct >= FAN_CLEANING_INTERVAL) {
+      DPRINTLN("SPS30 fan cleaning required.");
+      tbCleaned = true;
+      dayct = 0;
+    }
+    set(seconds2ticks((uint32_t)60 * 60 * 24)); 
+    clock.add(*this);       
   }
 
-  void init(uint32_t period,AlarmClock& clock) {
-    set(period);
+  void init(uint32_t period_ticks, AlarmClock& clock) {
+    set(period_ticks);
     clock.add(*this);
   }  
 
-  bool ToBeCleaned(void) {
+  bool CleaningReq(void) {
     return(tbCleaned);
   }
 
-  void Cleaned(bool cleaned) {
-    tbCleaned = !(cleaned);
+  void CleaningReq(bool req) {
+    tbCleaned = req;
   }
 }; 
 
 FanCleanTimer fanCleanTimer;
 
 
-class SensChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNEL, GDList0>, public Alarm {
+class SensChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_PER_CHANNEL, GDList0>, public Alarm {
     PMDataMsg1 msg1;
     PMDataMsg2 msg2;
     Sens_SHT31<0x44> sht31;  //SG: GY breakout board standard address
     Sens_SPS30 sps30;
     uint16_t millis;
     uint8_t ct;
+    uint8_t sampling_period;
     struct sps30_measurement spsdta;
 
     struct sps30_measurement_int {
@@ -172,17 +197,17 @@ class SensChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANN
     
 
   public:
-    SensChannel () : Channel(), Alarm(5), millis(0), ct(0) {}
+    SensChannel () : Channel(), Alarm(5), millis(0), ct(0), sampling_period(30) {}
     virtual ~SensChannel () {}
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
       if (ct == 0) {
         measure_start();
       }
-      else if ((ct > 0)&&(ct <= SPS_SAMPLING_INTERVAL)) {
+      else if ((ct > 0)&&(ct <= sampling_period)) {
         measure_loop();
       }
-      else if (ct == (SPS_SAMPLING_INTERVAL + 1)) {
+      else if (ct == (sampling_period + 1)) {
         measure_end();
       }
       clock.add(*this);     
@@ -243,18 +268,20 @@ class SensChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANN
     
 
     void measure_start(void) {
+       sampling_period = this->getList1().samplingPeriod();
        sht31.measure();
        if (sht31.humidity() <= SPS_MAX_WORKING_HUMIDITY) {
-         DPRINT("Starting SPS30, wait "); DDEC(SPS_SAMPLING_INTERVAL); DPRINTLN(" sec.");
+         DPRINT("Starting SPS30, wait "); DDEC(sampling_period); DPRINTLN(" sec.");
          mclr(&spsdta);
          sps30.start_measurement();
-         if(fanCleanTimer.ToBeCleaned()) {
+         if(fanCleanTimer.CleaningReq()) {
           DPRINTLN("SPS30 fan cleaning started.");         
           sps30.start_manual_fan_cleaning();
-          fanCleanTimer.Cleaned(true);
+          fanCleanTimer.CleaningReq(false);
+          DPRINT("SPS30 next fan cleaning in "); DDEC(FAN_CLEANING_INTERVAL); DPRINTLN(" days.");         
          }         
          ct=1;
-         tick = seconds2ticks(SPS_SAMPLING_INTERVAL); 
+         tick = seconds2ticks(sampling_period); 
        }
        else {
         DPRINTLN("SPS30 not started, too wet.");       
@@ -279,7 +306,7 @@ class SensChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANN
 
     void measure_end(void) {
       DPRINTLN("SPS30 measurement cycle finished, sensor idle.");        
-      mdiv(&spsdta, SPS_SAMPLING_INTERVAL);
+      mdiv(&spsdta, sampling_period);
       mint(&spsdta, &spsint);
       DPRINT("temp / hum = ");DDEC(sht31.temperature());DPRINT(" / ");DDECLN(sht31.humidity());
       DPRINT("mass concentration 1 / 2.5 / 4 / 10 = ");DDEC(spsdta.mc_1p0);DPRINT(" / ");DDEC(spsdta.mc_2p5);;DPRINT(" / ");DDEC(spsdta.mc_4p0);;DPRINT(" / ");DDECLN(spsdta.mc_10p0);
@@ -294,7 +321,8 @@ class SensChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANN
       device().sendPeerEvent(msg2, *this);    
       sps30.stop_measurement();
       ct=0;
-      tick = seconds2ticks(max(device().getList0().updIntervall() - 2 * SPS_SAMPLING_INTERVAL, 10));
+      tick = seconds2ticks(max((int32_t)device().getList0().updIntervall() - 2 * sampling_period, 10));
+      DPRINT("SPS next measurement cycle in "); DDEC(ticks2seconds(tick)); DPRINTLN(" seconds.");
     }
 
 
@@ -328,7 +356,7 @@ class PMDevice : public MultiChannelDevice<Hal, SensChannel, 1, GDList0> {
       DPRINTLN("* Config Changed       : List0");
       DPRINT(F("* LED Mode             : ")); DDECLN(this->getList0().ledMode());    
       DPRINT(F("* Sendeversuche        : ")); DDECLN(this->getList0().transmitDevTryMax());          
-      DPRINT(F("* SENDEINTERVALL       : ")); DDECLN(this->getList0().updIntervall());
+      DPRINT(F("* Sendeintervall       : ")); DDECLN(this->getList0().updIntervall());
     }
 };
 
@@ -341,7 +369,7 @@ void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
-  fanCleanTimer.init(seconds2ticks(5), sysclock);
+  fanCleanTimer.init(seconds2ticks(10), sysclock);
   sdev.initDone();
 }
 
@@ -350,7 +378,6 @@ void loop() {
   bool worked = hal.runready();
   bool poll = sdev.pollRadio();
   if ( worked == false && poll == false ) {
-    // if nothing to do - go to sleep    
     hal.activity.savePower<Sleep<>>(hal);
   }
 }
