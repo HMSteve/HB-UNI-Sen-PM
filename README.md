@@ -82,21 +82,23 @@ Blick von unten ins komplett montierte Gehaeuse
 Hinweis: Vor Einschirben der Platine ins Gehaeuse ist der O-Ring ueber der entsprechenden Gehaeuseoffnung zu plazieren und dann die Platine sehr vorsichtig einzuschieben, um ein Verrutschen des O-Rings zu vermeiden. An der Unterseite des Deckels sollten zwei Stuecke flexiblem Kunststoffes, z.B. PE-Schaum zu Verpackungszwecken, mit doppelseitigem Klebeband fixiert werden. Diese muessen hoeher als der Auflagerand fuer das innengehaeuse sein, um beim Zusammenschrauben der Gehaeuseteile Druck auf SPS30 und Platine auszuueben, damit der SPS30 auf den Luftoeffnungen fest aufliegt und der SHT31 auf dem O-Ring. Zusaetzlicher Wetterschutz der Luftoeffnungen kann durch Aufschieben eines Stuecks Schlauch mit 11mm Innendurchmesser erreicht werden. Diese [Schlauchstuecken](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/3D_Druck/LuftSchlauch.stl) koennen auch aus TPU gedruckt werden.
 Die uebrigen Druckteile sollten aus hinreichend wetterfestem Kunststoff wie PETG oder ASA gedruckt werden.
 
-## Bedienung
 
-Es gibt neben der AskSinPP-Config-Taste eine weitere Bedientaste. Ein kurzer Druck auf diese schaltet die Ampel-LED ein bzw. aus, ein langer Druck fuehrt zu einer forced calibration des SCD30. Hierzu sollte sich der Sensor bereits einige Minuten an der frischen Luft ohne nennenswerte Druckschwankungen durch Wind befunden haben. Der lange Tastendruck kalibriert dann den Sensor auf den im WebUI hinterlegten CO2-Referenzwert (im Freien ca. 410ppm). Die automatische Kalibrierung wird nicht verwendet auf Basis der These, dass ein Wegdriften der Auto-Kalibrierung bei nicht ausreichendem regelmaessigem Lueften problematischer ist als die Alterungsdrift nach forced calibration. Langzeitbeobachtungen hierzu fehlen mir jedoch.
+## Bedienung und Funktion
 
-Unterschreitet die Akkuspannung 2.2V, wird ein Warnsymbol im Display angezeigt und ein USB-Ladegerate sollte angeschlossen werden. Geschieht das nicht und die Spannung sinkt unter 2.0V, schaltet sich der Sensor zum Schutz vor Tiefentladung ab und zeigt dies an. Ein Reset (Wiedereinschalten) erfolgt automatisch beim Anschluss eines Ladegeraetes. Die gruene LED zeigt das Anliegen der Ladespannung, die gelbe den Schnelladevorgang. Es ist zu beachten, dass die Erwaermung beim Schnelladen natuerlich die Messwerte im Gehaeuse verfaelscht.
+Das Geraet besitzt zwei wesentliche Konfigurationsparameter, die Messdauer und das Sendeintervall. Liegt die relative Luftfeute zu Beginn eines Messzyklus im laut Datenblatt fuer den SPS30 zulaessigen Bereich, also nicht ueber 95%, wird der Sensor gestartet und fuer die Messdauer ohne Auslesen von Messwerten zwecks Stabilisierung betrieben. Anschliessend wird ueber den Zeitraum der Messdauer sekuendlich ein Messdatensatz vom Sensor geliefert. Ueber diese Messdatensaetze wird der Mittelwert als Ausgabewert des Geraetes gebildet. Anschliessend wird der SPS30 abgeschaltet, das Geraet wartet bis zum Ende des Sendeintervalls und startet den naechsten Messzyklus. Details zu diesem Vorgehen sind [hier](https://sensirion.com/media/documents/188A2C3C/6166F165/Sensirion_Particulate_Matter_AppNotes_SPS30_Low_Power_Operation_D1.pdf) nachzulesen.
+Liegt zu Beginn des Messzyklus die relative Feuchte ueber 95%, erfolgt keine Feinstaubmessung und in der WebUI bleine bei Aktualisierung von Temperatur und Feuchte die Feinstaubwerte unveraendert. Dies wird durch den Hinweis auf nicht aktuelle Feinstaubwerte kenntlich gemacht.
 
-Die Schaltschwellen der Ampelfarben, die Hoehe ueber NN sowie ein vom SCD30-Temperaturmesswert zu subtrahierender Offset zur Korrektur der Anzeige koennen im WebUI konfiguriert werden.
+Ein Sendeintervall kleiner als 2x Messdauer ist mithin nicht sinnvoll. Solche Einstellungen fuehren zu einem Sendeintervall etwas oberhalb von 2x Messdauer unabhaengig von der Einstellung des Sendeintervalls.
 
-![WebUI Settings](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Images/webui_settings.jpg)
+Die Konfigurationsseite:
+
+![WebUI Settings](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/images/webui_config.jpg)
 
 Die Messwerte werden dann so angezeigt:
 
-![WebUI Status](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Images/webui_status.jpg)
+![WebUI Status](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/images/webui_status.jpg)
 
-
+Dabei ist zu beachten, dass die Werte kumulativ sind. PM10 enthaelt also alle Partikel <=10 µm und schliesst damit die Werte der kleineren Partikelgroessen mit ein. 
 
 ## Disclaimer
 
