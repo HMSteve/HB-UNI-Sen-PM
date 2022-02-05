@@ -1,8 +1,8 @@
 # HB-UNI-Sen-PM
 
-![HB-UNI-Sen-CO2](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Images/dev_front.jpg)
+![HB-UNI-Sen-PM](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/images/komplett_seite.JPG)
 
-Eine AskSinPP-Implementierung eines Feinstaubsensors fuer den Aussenbereich mit dem Feinstaubsensor SPS30 sowie dem Feuchtesensor SHT31 von Sensirion. Das Geraet kann regulaer in eine Homematic-Umgebung eingebunden werden und liefert folgende Messwerte:
+Eine AskSinPP-Implementierung eines Feinstaubsensors fuer den Aussenbereich mit dem PM-Sensor SPS30 sowie dem Feuchtesensor SHT31 von Sensirion. Das Geraet kann regulaer in eine Homematic-Umgebung eingebunden werden und liefert folgende Messwerte:
 
 - Feinstaubkonzentrationen PM1, PM2.5, PM4 und PM10 im µg/m³
 - Partikelamzahlen je cm³ fuer Partikelgroessen <0.5µm, <1µm, <2.5µm, <4µm und <10µm
@@ -10,33 +10,25 @@ Eine AskSinPP-Implementierung eines Feinstaubsensors fuer den Aussenbereich mit 
 - Lueftfeuchte
 
 
-
-
-
-
 ## Platinen
 
-Auf der Platine sind drei I2C-Steckplaetze fuer Sensoren vorgesehen. Neben dem [Sensirion SCD30](https://www.sensirion.com/de/umweltsensoren/kohlendioxidsensor/kohlendioxidsensoren-co2/) bietet sich ein [4-poliges BME280-Modul](https://www.ebay.de/itm/BME280-Temperatur-Luftdruck-Feuchtigkeit-Sensor-I2C-1-8-5V-Modul/114603492524) zur Luftdruck-Kompensation an. Der Drucksensor ist auch in der Firmware vorgesehen. Der dritte Steckplatz ist aktuell frei.
-Als Display findet ein [1.54" Waveshare-E-Paper-Modul](https://www.waveshare.com/1.54inch-e-Paper-Module.htm) Verwendung.
-
-[Schaltplan](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/PCB/HB-Uni-Sen-CO2_Schematic.pdf)
-
-[Stueckliste](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/PCB/HB_UNI_Sen_CO2_BOM.pdf)
+Schaltplaene, Bestueckungsplaene, Gerber Files sowie Eagle Files finden sich [hier](https://github.com/HMSteve/HB-UNI-Sen-PM/tree/main/PCB).
 
 Ein paar Fotos vom Aufbau:
 
-![PCB Top](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Images/pcb_top_1.jpg)
+![PCB Main](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/images/pcb_main.jpg)
 
-![PCB Bottom](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Images/pcb_bot_1.jpg)
+![PCB Both](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/images/pcb_both.jpg)
 
-![PCB Top 2](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Images/pcb_top_2.jpg)
+![PCB and SPS](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/images/pcb_and_sps.jpg)
 
-![PCB Bottom 2](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Images/pcb_bot_2.jpg)
 
 ### Bestueckung
 
 Die Bestueckung der Hauptplatine ist unkritisch und kann per Hand erfolgen, es werden Bauformen 0805 oder groesser genutzt. Bei der Feuchtesensorplatine ist der SHT31 zuerst zu bestuecken. Grundsaetzlich ist Handloetung unter guter Lupe oder Mikroskop moeglich, vorteilhaft ist jedoch der Auftrag von Lotpaste mittels Schablone und Loetung mit Hitze, bspw Heissluft, von unten durch die Platine. Bei diesem Verfahren ist keine 100% exakte Positionierung des Bauteils noetig, da es bei korrekt dosierter Lotpaste nach deren Aufschmelzen auf Grund der Oberflaechenspannung auf dem flüssigen Lot von selbst in die korrekte Position schwimmt. Lupe oder Mikroskop zur Komtrolle der Loetstellen von der Seite sollte man nutzen. Anschliessend wird die Schutzkapp in die vorgesehenen Loecher eingesteckt und haelt ohne Klebstoffe etc.
-Die beiden Platinen sollten erst ganz zum Schluss, ggf nach Waschen der Hauptplatine, zusammengesteckt und verloetet werden. Der SHT31 darf weder Waschfluessigkeit wie Isopropanol noch deren Daempfen ausgesetzt werden. Anderenfalls ist mit einer (ohne Backen) irreversible Fehlmessung der Luftfeuchte zu rechnen. Eine k
+Die beiden Platinen sollten erst ganz zum Schluss, ggf. nach Waschen der Hauptplatine, zusammengesteckt und verloetet werden. Der SHT31 darf weder Waschfluessigkeit wie Isopropanol noch deren Daempfen ausgesetzt werden. Anderenfalls ist mit einer (ohne langwieriges Backen) irreversiblen Fehlmessung der Luftfeuchte zu rechnen.
+
+ACHTUNG: Version 2 der Hauptplatine besitzt einen fehlerhaften Aufdruck der Betriebsspannungspolaritaet. Dies unbedingt beachten. +5V sind an den Pin zum Platinenrand anzuschliessen, Masse an den Pin zur Platinenmitte. Auch nur kurze Verpolung kann bereits zur Zerstoerung des Elkos vor dem LDO und ggf. weiterer Bauteile fuehren.
 
 
 ## Software
@@ -73,6 +65,22 @@ Neben den 3D-Druckteilen wird folgendes Material benoetigt:
 - eine PG-Verschraubung M12 zur Einfuehrung der Stromversorgung
 - etwas elastisches Material zwischen Deckel und Sensor sowie Platine, um diese mit etwas Druck gegen die Gehaeuseunterseite beim Zusammenschrauben zu fixieren
 
+Ein paar Fotos vom Aufbau:
+
+Einschmelzmuttern im Deckel
+![Deckel](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/images/deckel.JPG)
+
+Deckel und Innengehaeuse vor Montage
+![Deckel und Innengehaeuse](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/images/deckel_und_innengehaeuse.jpg)
+
+Deckel und Innengehaeuse montiert
+![Deckel und Innengehaeuse montiert](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/images/innengehaeuse_montiert.JPG)
+
+Blick von unten ins komplett montierte Gehaeuse
+![HB-UNI-Sen-PM von unten](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/images/komplett_unten.JPG)
+
+Hinweis: Vor Einschirben der Platine ins Gehaeuse ist der O-Ring ueber der entsprechenden Gehaeuseoffnung zu plazieren und dann die Platine sehr vorsichtig einzuschieben, um ein Verrutschen des O-Rings zu vermeiden. An der Unterseite des Deckels sollten zwei Stuecke flexiblem Kunststoffes, z.B. PE-Schaum zu Verpackungszwecken, mit doppelseitigem Klebeband fixiert werden. Diese muessen hoeher als der Auflagerand fuer das innengehaeuse sein, um beim Zusammenschrauben der Gehaeuseteile Druck auf SPS30 und Platine auszuueben, damit der SPS30 auf den Luftoeffnungen fest aufliegt und der SHT31 auf dem O-Ring. Zusaetzlicher Wetterschutz der Luftoeffnungen kann durch Aufschieben eines Stuecks Schlauch mit 11mm Innendurchmesser erreicht werden. Diese [Schlauchstuecken](https://github.com/HMSteve/HB-UNI-Sen-PM/blob/main/3D_Druck/LuftSchlauch.stl) koennen auch aus TPU gedruckt werden.
+Die uebrigen Druckteile sollten aus hinreichend wetterfestem Kunststoff wie PETG oder ASA gedruckt werden.
 
 ## Bedienung
 
@@ -88,22 +96,6 @@ Die Messwerte werden dann so angezeigt:
 
 ![WebUI Status](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Images/webui_status.jpg)
 
-### Hinweise zum Energieverbrauch
-
-Der SCD30 zieht einen nennenswerten Ruhestrom (mind. 5mA). Ein Power Cycling wird vom Hersteller nicht empfohlen, siehe [hier](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Addl/CD_AN_SCD30_Low_Power_Mode_D2.pdf).
-Damit ist fuer das Geraet bei der Voreinstellung einer Sensor-Abtastperiode von 16s eine Akkulaufzeit von hoechstens 5 Tagen zu erwarten. Das heisst, der mobile Betrieb waehrend eines oder einiger (Arbeits)tage ist problemslos moeglich. Der Dauerbetrieb sollte jedoch eher mit USB-Netzteil erfolgen. Dabei versorgt nach Ende der Schnelladung der von der MAX712-Ladeschaltung gelieferte, von R20 gemaess [Datenblatt MAX712](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Addl/MAX712-MAX713.pdf) feinjustierte Erhaltungsladestrom das Device.  
-
-Hier eine Messung zum Stromverbrauch:
-
-![Power Consumption Detail](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Images/power_consumption_detail.jpg)
-
-Ein Excel-Workbook zum power budgeting findet sich [hier](https://github.com/HMSteve/HB-UNI-Sen-CO2/blob/main/Addl/BatteryBudgeting.xlsx).
-
-
-## Gehaeuse
-
-Zwischen Display und Platine sind vier zu druckende Abstandshuelsen einzusetzen. Das Gehaeuse stellt beim Drucken keine groesseren Herausforderungen. Die LED-Loecher sind ggf. mit 10.5mm bzw. 3.5mm aufzubohren, die Loecher im Boden mit 3mm.
-Fuer die Befestigung der Platine sind [M3-Einpressmuttern](https://www.amazon.de/dp/B08BCRZZS3) vorgesehen. Die Befestigung der Platine im Gehaeuse erfolgt mit M3x10 Distanzbolzen. Die Rueckwand wird dann mit M3x10 Zylinderkopfschrauben an diesen befestigt.
 
 
 ## Disclaimer
