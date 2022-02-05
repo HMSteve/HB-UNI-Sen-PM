@@ -55,9 +55,23 @@ Um die Firmware zu kompilieren, muessen sich die .ino sowie die .h Dateien im gl
 - LowPower
 - SparkFun SCD30 Arduino Library
 - Sensirion-sps30
-- 
+-
 
-Anschliessend sollte die Firmware problemlos kompilierbar und das Device nach dem Flashen anlernbar sein.
+Anschliessend sollte die Firmware problemlos kompilierbar und das Device nach dem Flashen anlernbar sein. Da der Anlerntaster zwecks Wetterschutz nicht von ausserhalb des Gehaeuses zugaenglich ist, muss das Anlernen vor dem Zusammenbau erfolgen.
+
+
+## Gehaeuse
+
+Das auessere Gehaeuse orientiert sich an einem aehnlichen [Projekt](https://www.thingiverse.com/thing:2821592), verwendet jedoch nur die mittleren Ringe des Stevenson Screen. Die uebrigen Dateien wurden von mir dazu passend erstellt. Alle STLs finden sich [hier](https://github.com/HMSteve/HB-UNI-Sen-PM/tree/main/3D_Druck).
+Neben den 3D-Druckteilen wird folgendes Material benoetigt:
+
+- je vier Einschmelzmuttern M3 und M8 fuer den Deckel
+- ein O-Ring 5mm x 1, moeglich ist auch 6mm x 1.5 oder aehnlich, zum Abichten der SF2-Filterkappe ueber dem SHT31 gegen das Gehaeuse
+- vier Schrauben M3 x 10, Edelstahl oder Messing, zum Montieren des inneren Gehaeuse am Deckel
+- EPDM-Dichtschnur 3mm zum Abdichten des inneren Gehaeuses gegen den Deckel
+- vier Gewindestange M8 zzgl. vier Muttern M8 zum Zusammenbau von Deckel, Zwischenringen und Haltewinkel, Edelstahl oder Messing
+- eine PG-Verschraubung M12 zur Einfuehrung der Stromversorgung
+- etwas elastisches Material zwischen Deckel und Sensor sowie Platine, um diese mit etwas Druck gegen die Gehaeuseunterseite beim Zusammenschrauben zu fixieren
 
 
 ## Bedienung
