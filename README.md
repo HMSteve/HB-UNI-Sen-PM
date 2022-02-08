@@ -29,8 +29,12 @@ Beide Platinen mit SPS30
 
 ### Bestueckung
 
-Die Bestueckung der Hauptplatine ist unkritisch und kann per Hand erfolgen, es werden Bauformen 0805 oder groesser genutzt. Bei der Feuchtesensorplatine ist der SHT31 zuerst zu bestuecken. Grundsaetzlich ist Handloetung unter guter Lupe oder Mikroskop moeglich, vorteilhaft ist jedoch der Auftrag von Lotpaste mittels Schablone und Loetung mit Hitze, bspw. Heissluft, von unten durch die Platine. Bei diesem Verfahren ist keine 100% exakte Positionierung des Bauteils noetig, da es bei korrekt dosierter Lotpaste nach deren Aufschmelzen auf Grund der Oberflaechenspannung auf dem flüssigen Lot von selbst in die korrekte Position schwimmt. Lupe oder Mikroskop zur Kontrolle der Loetstellen von der Seite sollte man nutzen. Anschliessend wird die Schutzkappe in die vorgesehenen Loecher eingesteckt und haelt ohne Klebstoffe etc.
+Die Bestueckung der Hauptplatine ist unkritisch und kann per Hand erfolgen, es werden Bauformen 0805 oder groesser genutzt.
+
+Bei der Feuchtesensorplatine ist der SHT31 zuerst zu bestuecken. Grundsaetzlich ist Handloetung unter guter Lupe oder Mikroskop moeglich, vorteilhaft ist jedoch der Auftrag von Lotpaste mittels Schablone und Loetung mit Hitze, bspw. Heissluft, von unten durch die Platine. Bei diesem Verfahren ist keine 100% exakte Positionierung des Bauteils noetig, da es bei korrekt dosierter Lotpaste nach deren Aufschmelzen auf Grund der Oberflaechenspannung auf dem flüssigen Lot von selbst in die korrekte Position schwimmt. Lupe oder Mikroskop zur Kontrolle der Loetstellen von der Seite sollte man nutzen. Anschliessend wird die Schutzkappe in die vorgesehenen Loecher eingesteckt und haelt ohne Klebstoffe etc.
 Die beiden Platinen sollten erst ganz zum Schluss, nach Test und ggf. nach Waschen der Hauptplatine, zusammengesteckt und verloetet werden. Der SHT31 darf weder Waschfluessigkeit wie Isopropanol noch deren Daempfen ausgesetzt werden. Anderenfalls ist mit einer (ohne langwieriges Backen) irreversiblen Fehlmessung der Luftfeuchte zu rechnen.
+
+Der Loetjumper ist gemaess Datenblatt des SHT31 unbedingt nach Masse zu schliessen, um unerwuenschte Effekte wie Aussetzer bei hoher Luftfeuchte zu vermeiden. 
 
 ACHTUNG: Version 2 der Hauptplatine besitzt einen fehlerhaften Aufdruck der Betriebsspannungspolaritaet. Dies unbedingt beachten. +5V sind an den Pin zum Platinenrand anzuschliessen, Masse an den Pin zur Platinenmitte. Auch nur kurze Verpolung kann bereits zur Zerstoerung des Elkos vor dem LDO und ggf. weiterer Bauteile fuehren.
 
