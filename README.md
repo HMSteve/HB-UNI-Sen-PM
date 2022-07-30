@@ -34,7 +34,7 @@ Die Bestueckung der Hauptplatine ist unkritisch und kann per Hand erfolgen, es w
 Bei der Feuchtesensorplatine ist der SHT31 zuerst zu bestuecken. Grundsaetzlich ist Handloetung unter guter Lupe oder Mikroskop moeglich, vorteilhaft ist jedoch der Auftrag von Lotpaste mittels Schablone und Loetung mit Hitze, bspw. Heissluft, von unten durch die Platine. Bei diesem Verfahren ist keine 100% exakte Positionierung des Bauteils noetig, da es bei korrekt dosierter Lotpaste nach deren Aufschmelzen auf Grund der Oberflaechenspannung auf dem flüssigen Lot von selbst in die korrekte Position schwimmt. Lupe oder Mikroskop zur Kontrolle der Loetstellen von der Seite sollte man nutzen. Anschliessend wird die Schutzkappe in die vorgesehenen Loecher eingesteckt und haelt ohne Klebstoffe etc.
 Die beiden Platinen sollten erst ganz zum Schluss, nach Test und ggf. nach Waschen der Hauptplatine, zusammengesteckt und verloetet werden. Der SHT31 darf weder Waschfluessigkeit wie Isopropanol noch deren Daempfen ausgesetzt werden. Anderenfalls ist mit einer (ohne langwieriges Backen) irreversiblen Fehlmessung der Luftfeuchte zu rechnen.
 
-Der Loetjumper ist gemaess Datenblatt des SHT31 unbedingt nach Masse zu schliessen, um unerwuenschte Effekte wie Aussetzer bei hoher Luftfeuchte zu vermeiden. 
+Der Loetjumper ist gemaess Datenblatt des SHT31 unbedingt nach Masse zu schliessen, um unerwuenschte Effekte wie Aussetzer bei hoher Luftfeuchte zu vermeiden.
 
 ACHTUNG: Version 2 der Hauptplatine besitzt einen fehlerhaften Aufdruck der Betriebsspannungspolaritaet. Dies unbedingt beachten. +5V sind an den Pin zum Platinenrand anzuschliessen, Masse an den Pin zur Platinenmitte. Auch nur kurze Verpolung kann bereits zur Zerstoerung des Elkos vor dem LDO und ggf. weiterer Bauteile fuehren.
 
@@ -43,7 +43,7 @@ ACHTUNG: Version 2 der Hauptplatine besitzt einen fehlerhaften Aufdruck der Betr
 
 ### Addon zur Geraeteunterstuetzung
 
-Sofern noch nicht vorhanden oder nicht aktuell, ist das [Addon](https://github.com/HMSteve/SG-HB-Devices-Addon/raw/master/CCU_RM/sg-hb-devices-addon.tgz) auf der CCU zu installieren. Der Sensor benoetigt mindestens Version 1.4.
+Sofern noch nicht vorhanden oder nicht aktuell, ist das [Addon](https://github.com/HMSteve/SG-HB-Devices-Addon/raw/master/CCU_RM/sg-hb-devices-addon.tgz) auf der CCU zu installieren. Der Sensor benoetigt mindestens Version 1.61.
 
 ### Firmware
 
@@ -93,8 +93,8 @@ Die uebrigen Druckteile sollten aus hinreichend wetterfestem Kunststoff wie PETG
 
 ## Bedienung und Funktion
 
-Das Geraet besitzt zwei wesentliche Konfigurationsparameter, die Messdauer und das Sendeintervall. Liegt die relative Luftfeuchte zu Beginn eines Messzyklus im laut Datenblatt fuer den SPS30 zulaessigen Bereich, also nicht ueber 95%, wird der SPS30 gestartet und fuer die Messdauer ohne Auslesen von Messwerten zwecks Stabilisierung betrieben. Anschliessend wird ueber den Zeitraum der Messdauer sekuendlich ein Messdatensatz vom SPS30 geliefert. Ueber diese Messdatensaetze wird der Mittelwert als Ausgabewert des Geraetes gebildet. Anschliessend wird der SPS30 abgeschaltet, das Geraet wartet bis zum Ende des Sendeintervalls und startet den naechsten Messzyklus. Details zu diesem Vorgehen sind [hier](https://sensirion.com/media/documents/188A2C3C/6166F165/Sensirion_Particulate_Matter_AppNotes_SPS30_Low_Power_Operation_D1.pdf) nachzulesen.
-Liegt zu Beginn des Messzyklus die relative Feuchte ueber 95%, erfolgt keine Feinstaubmessung und in der WebUI bleiben bei Aktualisierung von Temperatur und Feuchte die Feinstaubwerte unveraendert. Dies wird durch den Hinweis auf nicht aktuelle Feinstaubwerte kenntlich gemacht.
+Das Geraet besitzt drei wesentliche Konfigurationsparameter, die Messdauer und das Sendeintervall sowie das Luftfeuchtelimit. Liegt die relative Luftfeuchte zu Beginn eines Messzyklus im mit dem Luftfeuchtelimit vorgegebenen Bereich (laut Datenblatt sind fuer den SPS30 max. 95% zulaessig), wird der SPS30 gestartet und fuer die Messdauer ohne Auslesen von Messwerten zwecks Stabilisierung betrieben. Anschliessend wird ueber den Zeitraum der Messdauer sekuendlich ein Messdatensatz vom SPS30 geliefert. Ueber diese Messdatensaetze wird der Mittelwert als Ausgabewert des Geraetes gebildet. Anschliessend wird der SPS30 abgeschaltet, das Geraet wartet bis zum Ende des Sendeintervalls und startet den naechsten Messzyklus. Details zu diesem Vorgehen sind [hier](https://sensirion.com/media/documents/188A2C3C/6166F165/Sensirion_Particulate_Matter_AppNotes_SPS30_Low_Power_Operation_D1.pdf) nachzulesen.
+Liegt zu Beginn des Messzyklus die relative Feuchte ueber dem Limit, erfolgt keine Feinstaubmessung und in der WebUI bleiben bei Aktualisierung von Temperatur und Feuchte die Feinstaubwerte unveraendert. Dies wird durch den Hinweis auf nicht aktuelle Feinstaubwerte kenntlich gemacht.
 
 Ein Sendeintervall kleiner als 2x Messdauer ist mithin nicht sinnvoll. Solche Einstellungen fuehren zu einem Sendeintervall etwas oberhalb von 2x Messdauer unabhaengig von der Einstellung des Sendeintervalls.
 
