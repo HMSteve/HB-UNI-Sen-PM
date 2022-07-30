@@ -6,7 +6,7 @@
 // 2022-01-23 PM, HMSteve (cc)
 //- -----------------------------------------------------------------------------------------------------------------------
 
-#define NDEBUG   // disable all serial debug messages  
+//#define NDEBUG   // disable all serial debug messages  
 #define SENSOR_ONLY
 
 #define EI_NOTEXTERNAL
@@ -26,7 +26,6 @@
 #define PEERS_PER_CHANNEL 6
 
 #define FAN_CLEANING_INTERVAL 5      //every 5 days
-#define SPS_MAX_WORKING_HUMIDITY 95  //PM measurement only up to this value. maximum per datasheet is 95
 
 
 // all library classes are placed in the namespace 'as'
@@ -37,7 +36,7 @@ const struct DeviceInfo PROGMEM devinfo = {
   {0xf8, 0x24, 0x01},     // Device ID
   "SGSENPM001",           // Device Serial
   {0xf8, 0x24},           // Device Model 
-  0x10,                   // Firmware Version
+  0x11,                   // Firmware Version
   as::DeviceType::THSensor, // Device Type
   {0x01, 0x00}            // Info Bytes
 };
@@ -75,7 +74,7 @@ class GDList0 : public RegList0<Reg0> {
     }
 };
 
-DEFREGISTER(Reg1, 0x01)
+DEFREGISTER(Reg1, 0x01, 0x02, 0x03)
 class SensorList1 : public RegList1<Reg1> {
   public:
     SensorList1 (uint16_t addr) : RegList1<Reg1>(addr) {}
@@ -87,10 +86,20 @@ class SensorList1 : public RegList1<Reg1> {
     uint16_t samplingPeriod () const {
       return this->readRegister(0x01, 0);
     }
+
+    bool humidityLimit (uint16_t value) const {
+      return this->writeRegister(0x02, (value >> 8) & 0xff) && this->writeRegister(0x03, value & 0xff);
+    }
+    
+    uint16_t humidityLimit () const {
+      return (this->readRegister(0x02, 0) << 8) + this->readRegister(0x03, 0);
+    }
+    
  
     void defaults () {
       clear();
       samplingPeriod(30); 
+      humidityLimit(95);
     }
 };
 
@@ -270,7 +279,7 @@ class SensChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_PER
     void measure_start(void) {
        sampling_period = this->getList1().samplingPeriod();
        sht31.measure();
-       if (sht31.humidity() <= SPS_MAX_WORKING_HUMIDITY) {
+       if (sht31.humidity() <= this->getList1().humidityLimit()) {
          DPRINT("Starting SPS30, wait "); DDEC(sampling_period); DPRINTLN(" sec.");
          mclr(&spsdta);
          sps30.start_measurement();
