@@ -6,7 +6,7 @@
 // 2022-01-23 PM, HMSteve (cc)
 //- -----------------------------------------------------------------------------------------------------------------------
 
-//#define NDEBUG   // disable all serial debug messages  
+#define NDEBUG   // disable all serial debug messages  
 #define SENSOR_ONLY
 
 #define EI_NOTEXTERNAL
